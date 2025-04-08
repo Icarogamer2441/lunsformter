@@ -127,7 +127,7 @@ class LunsDataset:
         self.vocab_size = len(self.word2idx)
 
 class LunsformterModel:
-    def __init__(self, dataset, seq_len=12, dim=64, hidden_dim=128, num_layers=2, chunk_size=4, lr=0.03):
+    def __init__(self, dataset, seq_len=12, dim=64, hidden_dim=128, num_layers=2, chunk_size=4, lr=0.03, max_train_seq_len=None):
         self.dataset = dataset
         self.model = Lunsformter(
             vocab_size=dataset.vocab_size,
@@ -139,6 +139,7 @@ class LunsformterModel:
         )
         self.lr = lr
         self.seq_len = seq_len
+        self.max_train_seq_len = max_train_seq_len if max_train_seq_len is not None else seq_len
 
     def fit(self, epochs=500, verbose=True):
         for epoch in range(1, epochs+1):
@@ -147,6 +148,9 @@ class LunsformterModel:
                 if len(tokens)<2: continue
                 inp = np.array(tokens[:-1])
                 tgt = np.array(tokens[1:])
+                if len(inp) > self.max_train_seq_len:
+                    inp = inp[:self.max_train_seq_len]
+                    tgt = tgt[:self.max_train_seq_len]
                 logits = self.model.forward(inp)
 
                 probs = np.exp(logits - np.max(logits, axis=1, keepdims=True))
@@ -160,7 +164,15 @@ class LunsformterModel:
 
                 dlogits = (probs - onehot)/len(tgt)
 
-                h = self.model.embeddings[inp] + self.model.positional[:len(inp)]
+                seq_len_inp = len(inp)
+                if seq_len_inp > self.model.positional.shape[0]:
+                    extra_needed = seq_len_inp - self.model.positional.shape[0]
+                    extra_pos = np.random.randn(extra_needed, self.model.dim) * 0.01
+                    pos_embeds = np.concatenate([self.model.positional, extra_pos], axis=0)
+                else:
+                    pos_embeds = self.model.positional
+
+                h = self.model.embeddings[inp] + pos_embeds[:seq_len_inp]
                 gradWout = h.T @ dlogits
                 gradbout = np.sum(dlogits, axis=0)
                 self.model.output_W -= self.lr*gradWout

@@ -62,7 +62,16 @@ class Lunsformter:
         return updated_x[:seq_len]
 
     def forward(self, idx_seq):
-        x = self.embeddings[idx_seq] + self.positional[:len(idx_seq)]
+        seq_len_in = len(idx_seq)
+        if seq_len_in > self.positional.shape[0]:
+            # Expand positional embeddings dynamically
+            extra_needed = seq_len_in - self.positional.shape[0]
+            extra_pos = np.random.randn(extra_needed, self.dim) * 0.01
+            pos_embeds = np.concatenate([self.positional, extra_pos], axis=0)
+        else:
+            pos_embeds = self.positional
+
+        x = self.embeddings[idx_seq] + pos_embeds[:seq_len_in]
 
         # Positional propagation
         for pos in range(1, len(x)):

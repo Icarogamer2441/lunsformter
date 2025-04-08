@@ -29,7 +29,7 @@ print("\n=== Generation from loaded model (temperature=0.8, verbose mode) ===")
 gen2 = loaded_model.generate(prompt, max_tokens=12, temperature=0.8, verbose=True)
 print(f"Generated after reload:\n{gen2}")
 
-print("\n=== Fine-tuning the loaded model for 100 more epochs... ===")
+print("\n=== Fine-tuning the loaded model for 200 more epochs... ===")
 loaded_model.fine_tune(dataset, epochs=200)
 print("Fine-tuning complete.\n")
 
