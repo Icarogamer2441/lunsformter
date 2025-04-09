@@ -1,21 +1,24 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="lunsft",
+    name="lunsformter",
     version="0.1.0",
-    description="Lightweight Inside-Out Byte-Pair Encoding Transformer Library",
-    author="Icarogamer2441",
+    description="A lightweight, flexible transformer-like language model toolkit with inside-out generation.",
+    author="Your Name",
+    author_email="youremail@example.com",
+    url="https://github.com/yourusername/lunsformter",
     packages=find_packages(),
     install_requires=[
-        "numpy>=1.20"
+        "numpy"
     ],
-    include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
-        "Intended Audience :: Developers",
-        "Topic :: Scientific/Engineering :: Artificial Intelligence",
-        "Operating System :: OS Independent",
+        "Intended Audience :: Science/Research",
+        "Topic :: Scientific/Engineering :: Artificial Intelligence"
     ],
-    python_requires=">=3.8",
+    python_requires='>=3.6',
+    include_package_data=True,
+    license="MIT",
+    keywords="transformer language-model NLP BPE inside-out generation research",
 )

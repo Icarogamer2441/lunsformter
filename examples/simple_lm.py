@@ -1,6 +1,5 @@
-from lunsft.lunslib import LunsDataset, LunsformterModel
+from lunsft import LunsDataset, LunsformterModel, ReadableResponseLayer
 
-# === INITIAL TRAINING ===
 dataset_path = 'examples/chat_data.txt'
 dataset = LunsDataset(dataset_path, num_merges=500)
 model = LunsformterModel(dataset, seq_len=15, dim=120, hidden_dim=256, num_layers=4, chunk_size=8)
@@ -36,3 +35,16 @@ print("Fine-tuning complete.\n")
 print("\n=== Generation after fine-tuning (temperature=1.2) ===")
 gen3 = loaded_model.generate(prompt, max_tokens=12, temperature=1.2, verbose=False)
 print(f"Generated after fine-tune:\n{gen3}")
+
+# -----------------------------
+#  Add: Readable Response Layer demo
+# -----------------------------
+
+readable_layer = ReadableResponseLayer(threshold=0.02, max_attempts=5)
+
+# Attach layer
+loaded_model.readable_layer = readable_layer
+
+print("\n=== Generation WITH Readable Response Layer enabled ===")
+gen4 = loaded_model.generate(prompt, max_tokens=12, verbose=False, temperature=1.0)
+print(f"Generated with ReadableResponseLayer:\n{gen4}")

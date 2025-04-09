@@ -64,7 +64,6 @@ class Lunsformter:
     def forward(self, idx_seq):
         seq_len_in = len(idx_seq)
         if seq_len_in > self.positional.shape[0]:
-            # Expand positional embeddings dynamically
             extra_needed = seq_len_in - self.positional.shape[0]
             extra_pos = np.random.randn(extra_needed, self.dim) * 0.01
             pos_embeds = np.concatenate([self.positional, extra_pos], axis=0)
@@ -73,7 +72,6 @@ class Lunsformter:
 
         x = self.embeddings[idx_seq] + pos_embeds[:seq_len_in]
 
-        # Positional propagation
         for pos in range(1, len(x)):
             decay = 0.8 ** pos
             x[pos] += decay * x[0]
@@ -92,18 +90,23 @@ class Lunsformter:
         logits = x @ self.output_W + self.output_b
         return logits
 
-    def generate(self, prefix, max_tokens=20, temperature=1.0):
+    def generate(self, prefix, max_tokens=20, temperature=1.0, return_scores=False):
         idx_seq = np.array(prefix)
+        prob_scores = []
         for _ in range(max_tokens):
             logits = self.forward(idx_seq[-self.seq_len:])
             logits = logits[-1] / max(temperature, 1e-8)
             probs = np.exp(logits - np.max(logits))
             probs = probs / np.sum(probs)
             next_token = np.random.choice(len(probs), p=probs)
+            prob_scores.append(probs[next_token])
             idx_seq = np.append(idx_seq, next_token)
-        return idx_seq
+        if return_scores:
+            return idx_seq, prob_scores
+        else:
+            return idx_seq
 
-    def insideout_generate(self, prefix, max_tokens=20, num_candidates=5, penalize_repeats=True, verbose=False, temperature=1.0):
+    def insideout_generate(self, prefix, max_tokens=20, num_candidates=5, penalize_repeats=True, verbose=False, temperature=1.0, return_scores=False):
         idx_seq = np.array(prefix)
 
         logits = self.forward(idx_seq[-self.seq_len:])
@@ -117,6 +120,7 @@ class Lunsformter:
 
         best_seq = None
         best_score = -np.inf
+        best_scores_list = None
 
         for candidate_idx, start in enumerate(top_tokens):
             candidate_seq = np.append(idx_seq, start)
@@ -149,13 +153,17 @@ class Lunsformter:
             if avg_score > best_score:
                 best_score = avg_score
                 best_seq = candidate_seq
+                best_scores_list = list(scores)
                 if verbose:
                     print(f"  --> New best sequence found with score {best_score:.4f}")
 
         if verbose:
             print(f"\n[InsideOut] Best overall avg score: {best_score:.4f}")
 
-        return best_seq
+        if return_scores:
+            return best_seq, best_scores_list
+        else:
+            return best_seq
 
 if __name__ == "__main__":
     model = Lunsformter()
